@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"os"
 	"regexp"
@@ -81,9 +81,8 @@ func readAndSendLogs(filePath, apiURL string) {
 
 			// As above, this is an unhandled error that I'm comfortable with
 			defer resp.Body.Close()
-			// I believe ReadAll is deprecated. I'll look into replacing
-			// it in an upcoming commit.
-			body, _ := ioutil.ReadAll(resp.Body)
+			// ioutil.ReadAll is deprecated, so I've replaced it with the version in `io`.
+			body, _ := io.ReadAll(resp.Body)
 			fmt.Printf("Response: %s\n", string(body))
 
 			// I noticed while working on the code that the wg.Done()
