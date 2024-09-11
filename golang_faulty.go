@@ -15,8 +15,8 @@ import (
 func readAndSendLogs(filePath, apiURL string) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		fmt.Println("Error opening file:", err)
-		return
+		fmt.Fprintln(os.Stderr, "Error opening file:", err)
+		os.Exit(2)
 	}
 	// This is an unhandled error, but I wouldn't change it because there's not
 	// much we can do if Close() fails.
@@ -58,8 +58,8 @@ func readAndSendLogs(filePath, apiURL string) {
 			data := map[string]string{"timestamp": match[1], "message": match[2]}
 			jsonData, err := json.Marshal(data)
 			if err != nil {
-				// TODO BEFORE MERGE: fix error handling (along with the others)
-				fmt.Println("Failed to encode JSON:", err)
+				fmt.Fprintln(os.Stderr, "Failed to encode JSON:", err)
+				return
 			}
 
 			resp, err := http.Post(apiURL, "application/json", bytes.NewBuffer(jsonData))
@@ -67,20 +67,22 @@ func readAndSendLogs(filePath, apiURL string) {
 			// also check the status code of the response, as in the Python
 			// version.  I'll add that in an upcoming commit.
 			if err != nil {
-				// As with the Python version, we should send errors to STDERR.
+				// As with the Python version, we now send errors to STDERR.
 				// Unfortunately, we can't easily exit with an error status
 				// without some refactoring - we'd need a mechanism (e.g.
 				// a channel) to communicate the failure in the goroutine
 				// back to the main program.
-				fmt.Println("Failed to send log:", err)
-			} else {
-				// As above, this is an unhandled error that I'm comfortable with
-				defer resp.Body.Close()
-				// I believe ReadAll is deprecated. I'll look into replacing
-				// it in an upcoming commit.
-				body, _ := ioutil.ReadAll(resp.Body)
-				fmt.Printf("Response: %s\n", string(body))
+				fmt.Fprintln(os.Stderr, "Failed to send log:", err)
+				return
 			}
+
+			// As above, this is an unhandled error that I'm comfortable with
+			defer resp.Body.Close()
+			// I believe ReadAll is deprecated. I'll look into replacing
+			// it in an upcoming commit.
+			body, _ := ioutil.ReadAll(resp.Body)
+			fmt.Printf("Response: %s\n", string(body))
+
 			// I noticed while working on the code that the wg.Done()
 			// call here will only happen on success, leading to the
 			// main goroutine blocking if any errors happen.  I've fixed
@@ -96,7 +98,8 @@ func readAndSendLogs(filePath, apiURL string) {
 		// we'd detect "file not found" and exit with 1, otherwise we'd
 		// exit with 2.  I'm not sure how easy that is with Scanner but I'll
 		// look into it!
-		fmt.Println("Error reading file:", err)
+		fmt.Fprintln(os.Stderr, "Error reading file:", err)
+		os.Exit(2)
 	}
 	wg.Wait()
 }
