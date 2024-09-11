@@ -63,9 +63,6 @@ func readAndSendLogs(filePath, apiURL string) {
 			}
 
 			resp, err := http.Post(apiURL, "application/json", bytes.NewBuffer(jsonData))
-			// As well as checking for errors from the Post() call, we could
-			// also check the status code of the response, as in the Python
-			// version.  I'll add that in an upcoming commit.
 			if err != nil {
 				// As with the Python version, we now send errors to STDERR.
 				// Unfortunately, we can't easily exit with an error status
@@ -73,6 +70,12 @@ func readAndSendLogs(filePath, apiURL string) {
 				// a channel) to communicate the failure in the goroutine
 				// back to the main program.
 				fmt.Fprintln(os.Stderr, "Failed to send log:", err)
+				return
+			}
+			// As well as checking for errors from the Post() call, we now
+			// check the status code of the response, as in the Python version.
+			if resp.StatusCode != http.StatusCreated {
+				fmt.Fprintln(os.Stderr, "Unexpected error from API:", resp.StatusCode)
 				return
 			}
 
