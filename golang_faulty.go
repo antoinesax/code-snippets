@@ -44,6 +44,7 @@ func readAndSendLogs(filePath, apiURL string) {
 			wg.Add(1)
 			go func() {
 				// Sending log to API
+				defer wg.Done()
 
 				// I ran the program and it failed due to an error from the backend:
 				// `SyntaxError: Unexpected token W in JSON at position 1`
@@ -75,7 +76,11 @@ func readAndSendLogs(filePath, apiURL string) {
 					body, _ := ioutil.ReadAll(resp.Body)
 					fmt.Printf("Response: %s\n", string(body))
 				}
-				wg.Done()
+				// I noticed while working on the code that the wg.Done()
+				// call here will only happen on success, leading to the
+				// main goroutine blocking if any errors happen.  I've fixed
+				// this using `defer`.
+				//wg.Done()
 			}()
 		}
 	}
