@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -42,7 +44,19 @@ func readAndSendLogs(filePath, apiURL string) {
 			wg.Add(1)
 			go func() {
 				// Sending log to API
-				resp, err := http.Post(apiURL, "application/json", strings.NewReader(line))
+
+				// I ran the program and it failed due to an error from the backend:
+				// `SyntaxError: Unexpected token W in JSON at position 1`
+				// Looking back at the code, the issue is obvious: we're sending
+				// the raw string rather than JSON.
+				data := map[string]string{"timestamp": "TODO", "message": line}
+				jsonData, err := json.Marshal(data)
+				if err != nil {
+					// TODO BEFORE MERGE: fix error handling (along with the others)
+					fmt.Println("Failed to encode JSON:", err)
+				}
+
+				resp, err := http.Post(apiURL, "application/json", bytes.NewBuffer(jsonData))
 				// As well as checking for errors from the Post() call, we could
 				// also check the status code of the response, as in the Python
 				// version.  I'll add that in an upcoming commit.
