@@ -116,5 +116,5 @@ func main() {
 	readAndSendLogs("server.log", "https://jsonplaceholder.typicode.com/posts")
 }
 
-// Overall I find this code straightforward and clear, and after the `bufio` fix
-// I believe it will work.
+// Overall I find this code straightforward and clear, but I've made some
+// small improvements, mostly for consistency with the Python version.
