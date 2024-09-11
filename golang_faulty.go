@@ -15,8 +15,15 @@ import (
 func readAndSendLogs(filePath, apiURL string) {
 	file, err := os.Open(filePath)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Error opening file:", err)
-		os.Exit(2)
+		// As in the Python version, we exit with status 1 for "file not
+		// found" and 2 for a general error.
+		if os.IsNotExist(err) { // Check if the error is a "file not found" error
+			fmt.Fprintln(os.Stderr, "File not found. Please check the file path.")
+			os.Exit(1)
+		} else {
+			fmt.Fprintln(os.Stderr, "An error occurred:", err)
+			os.Exit(2)
+		}
 	}
 	// This is an unhandled error, but I wouldn't change it because there's not
 	// much we can do if Close() fails.
@@ -95,11 +102,10 @@ func readAndSendLogs(filePath, apiURL string) {
 	}
 
 	if err := scanner.Err(); err != nil {
-		// Here we should print to STDERR again, and we _can_ exit with
-		// an error status.  For consistency with the Python version,
-		// we'd detect "file not found" and exit with 1, otherwise we'd
-		// exit with 2.  I'm not sure how easy that is with Scanner but I'll
-		// look into it!
+		// Here we print to STDERR for consistency with the Python version, and
+		// we _can_ exit with an error status.  As in the Python version, we
+		// exit with status 2 for a general error and status 1 (detected at the
+		// start of this function) for "file not found".
 		fmt.Fprintln(os.Stderr, "Error reading file:", err)
 		os.Exit(2)
 	}
