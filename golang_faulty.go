@@ -1,12 +1,13 @@
 package main
 
 import (
-    "fmt"
-    "io/ioutil"
-    "net/http"
-    "os"
-    "strings"
-    "sync"
+	"bufio"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"os"
+	"strings"
+	"sync"
 )
 
 func readAndSendLogs(filePath, apiURL string) {
@@ -24,9 +25,12 @@ func readAndSendLogs(filePath, apiURL string) {
         line := scanner.Text()
         if strings.Contains(line, "ERROR") {
             wg.Add(1)
-            go func() {
+						go func(l string) {
+                defer wg.Done()
+
                 // Sending log to API
-                resp, err := http.Post(apiURL, "application/json", strings.NewReader(line))
+								// If fatal, the whole process exit
+                resp, err := http.Post(apiURL, "plain/text", strings.NewReader(l))
                 if err != nil {
                     fmt.Println("Failed to send log:", err)
                 } else {
@@ -34,8 +38,7 @@ func readAndSendLogs(filePath, apiURL string) {
                     body, _ := ioutil.ReadAll(resp.Body)
                     fmt.Printf("Response: %s\n", string(body))
                 }
-                wg.Done()
-            }()
+					}(line)
         }
     }
 
