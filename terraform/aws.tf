@@ -85,5 +85,5 @@ resource "aws_instance" "web" {
 
 resource "aws_key_pair" "my_key" {
   key_name   = "my-key-pair"
-  public_key = "ssh-rsa AAAAB3Nza..." # Replace with your public SSH key
+  public_key = "ssh-rsa AAAAB3Nza..."
 }
